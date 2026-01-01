@@ -16,11 +16,44 @@ const createPost = async (
   return result;
 };
 
-const getPosts = async () => {
-  const result = await prisma.post.findMany({
-    include: { author: true },
+const createManyPosts = async (
+  data: Array<
+    Omit<Post, "id" | "createdAt" | "updatedAt" | "authorId"> & {
+      title: string;
+    }
+  >,
+  userId: string
+) => {
+  const result = await prisma.post.createMany({
+    data: data.map((post) => ({
+      ...post,
+      authorId: userId,
+    })),
   });
   return result;
 };
 
-export const postServices = { createPost, getPosts };
+const getPosts = async (search?: string) => {
+  const result = await prisma.post.findMany({
+    include: { author: { select: { name: true, email: true } } },
+    where: {
+      OR: [
+        {
+          title: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+      ],
+    },
+  });
+  return result;
+};
+
+export const postServices = { createPost, createManyPosts, getPosts };

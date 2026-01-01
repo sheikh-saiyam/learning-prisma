@@ -3,7 +3,7 @@ import { prisma } from "./lib/prisma";
 
 const PORT = process.env.PORT;
 
-async function main() {
+async function server() {
   try {
     await prisma.$connect();
     console.log("Database connected successfully!");
@@ -18,4 +18,4 @@ async function main() {
   }
 }
 
-main();
+server();

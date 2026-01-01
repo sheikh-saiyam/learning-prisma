@@ -10,12 +10,13 @@ app.use(express.json());
 app.use(
   cors({
     origin: process.env.APP_ORIGIN,
+    credentials: true,
   })
 );
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
-app.use("/post", postRouter);
+app.use("/posts", postRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Prisma Blog App Server Is Running!");
