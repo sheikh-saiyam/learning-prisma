@@ -1,12 +1,7 @@
-import { Post, PostStatus } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
+import { CreatePostType, GetPostsParams } from "./post.types";
 
-const createPost = async (
-  data: Omit<Post, "id" | "createdAt" | "updatedAt" | "authorId"> & {
-    title: string;
-  },
-  userId: string
-) => {
+const createPost = async (data: CreatePostType, userId: string) => {
   const result = await prisma.post.create({
     data: {
       ...data,
@@ -16,14 +11,7 @@ const createPost = async (
   return result;
 };
 
-const createManyPosts = async (
-  data: Array<
-    Omit<Post, "id" | "createdAt" | "updatedAt" | "authorId"> & {
-      title: string;
-    }
-  >,
-  userId: string
-) => {
+const createManyPosts = async (data: Array<CreatePostType>, userId: string) => {
   const result = await prisma.post.createMany({
     data: data.map((post) => ({
       ...post,
@@ -34,20 +22,18 @@ const createManyPosts = async (
 };
 
 const getPosts = async ({
+  skip,
+  take,
+  orderBy,
   search,
   tags,
   isFeatured,
   status,
   authorId,
-}: {
-  search: string | undefined;
-  tags: string[] | [];
-  isFeatured: boolean | undefined;
-  status: PostStatus | undefined;
-  authorId: string | undefined;
-}) => {
+}: GetPostsParams) => {
   const result = await prisma.post.findMany({
     include: { author: { select: { name: true, email: true } } },
+    // filtering
     where: {
       AND: [
         // searching in title, content and tags
@@ -102,8 +88,16 @@ const getPosts = async ({
         },
       ],
     },
+    // pagination
+    skip: skip,
+    take: take,
+    // sorting
+    ...(orderBy && { orderBy }),
   });
-  return result;
+
+  const total = await prisma.post.count();
+
+  return { data: result, total };
 };
 
 export const postServices = { createPost, createManyPosts, getPosts };

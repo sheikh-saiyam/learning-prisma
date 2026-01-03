@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { postServices } from "./post.service";
 import { PostStatus } from "../../../generated/prisma/enums";
+import { buildPaginationAndSort } from "../../utils/pagination-sort";
 
 const createPost = async (req: Request, res: Response) => {
   try {
@@ -37,11 +38,17 @@ const createManyPosts = async (req: Request, res: Response) => {
 const getPosts = async (req: Request, res: Response) => {
   try {
     const { search, tags, isFeatured, status, authorId } = req.query;
+
+    const { skip, take, orderBy } = buildPaginationAndSort(req.query);
+
     const splittedTags = tags ? (tags as string).split(",") : [];
     const booleanIsFeatured =
       isFeatured === "true" ? true : isFeatured === "false" ? false : undefined;
 
     const result = await postServices.getPosts({
+      skip,
+      take,
+      orderBy,
       search: search as string,
       tags: splittedTags,
       isFeatured: booleanIsFeatured,
@@ -52,7 +59,14 @@ const getPosts = async (req: Request, res: Response) => {
     res.status(201).send({
       success: true,
       message: "Post retrieve successfully!",
-      data: result,
+      meta: {
+        total: result.total,
+        page: Math.ceil(skip / take) + 1,
+        totalPages: Math.ceil(result.total / take),
+        limit: take,
+        skip: skip,
+      },
+      data: result.data,
     });
   } catch (error) {
     res.status(500).json({
