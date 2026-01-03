@@ -5,6 +5,7 @@ import auth, { Role } from "../../middlewares/auth";
 const router = express.Router();
 
 router.get("/", postControllers.getPosts);
+router.get("/:id", postControllers.getPostById);
 router.post("/", auth(Role.USER, Role.ADMIN), postControllers.createPost);
 router.post(
   "/create-many",
