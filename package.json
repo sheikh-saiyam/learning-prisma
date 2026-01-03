@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "auth:generate": "pnpm dlx @better-auth/cli generate"
+    "auth:generate": "pnpm dlx @better-auth/cli generate",
+    "admin:seed": "tsx prisma/seed/admin.seed.ts"
   },
   "type": "module",
   "keywords": [],
