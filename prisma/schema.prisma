@@ -18,6 +18,18 @@ enum CommentStatus {
   REJECTED
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
 // System Schema 
 
 model Post {
@@ -70,10 +82,11 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role   String? @default("USER")
+  role   UserRole   @default(USER)
   phone  String?
-  status String? @default("ACTIVE")
-  posts  Post[]
+  status UserStatus @default(ACTIVE)
+
+  posts Post[]
 
   @@unique([email])
   @@map("user")
