@@ -1,0 +1,9 @@
+import express from "express";
+import { commentControllers } from "./comment.controller";
+import auth, { Role } from "../../middlewares/auth";
+
+const router = express.Router();
+
+router.post("/", auth(Role.ADMIN, Role.USER), commentControllers.createComment);
+
+export const commentRouter = router;

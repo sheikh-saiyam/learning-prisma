@@ -114,7 +114,7 @@ const getPostById = async (postId: string) => {
             createdAt: true,
           },
         },
-        author: { select: { name: true, email: true } },
+        author: { select: { id: true, name: true, email: true } },
       },
     });
 
