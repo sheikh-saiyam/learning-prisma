@@ -104,7 +104,18 @@ const getPostById = async (postId: string) => {
   const result = await prisma.$transaction(async (ctx) => {
     const post = await ctx.post.findUnique({
       where: { id: postId },
-      include: { author: { select: { name: true, email: true } } },
+      include: {
+        comments: {
+          select: {
+            id: true,
+            content: true,
+            replies: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        author: { select: { name: true, email: true } },
+      },
     });
 
     await ctx.post.update({
