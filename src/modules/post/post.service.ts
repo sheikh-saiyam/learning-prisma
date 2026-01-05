@@ -3,20 +3,14 @@ import { CreatePostType, GetPostsParams } from "./post.types";
 
 const createPost = async (data: CreatePostType, userId: string) => {
   const result = await prisma.post.create({
-    data: {
-      ...data,
-      authorId: userId,
-    },
+    data: { ...data, authorId: userId },
   });
   return result;
 };
 
 const createManyPosts = async (data: Array<CreatePostType>, userId: string) => {
   const result = await prisma.post.createMany({
-    data: data.map((post) => ({
-      ...post,
-      authorId: userId,
-    })),
+    data: data.map((post) => ({ ...post, authorId: userId })),
   });
   return result;
 };
@@ -32,7 +26,11 @@ const getPosts = async ({
   authorId,
 }: GetPostsParams) => {
   const result = await prisma.post.findMany({
-    include: { author: { select: { name: true, email: true } } },
+    include: {
+      author: { select: { id: true, name: true, email: true } },
+      // counts of comments
+      _count: { select: { comments: true } },
+    },
     // filtering
     where: {
       AND: [
@@ -105,13 +103,45 @@ const getPostById = async (postId: string) => {
     const post = await ctx.post.findUnique({
       where: { id: postId },
       include: {
+        _count: {
+          select: { comments: true },
+        },
+        // 1st level of comments - Parent comments
         comments: {
-          select: {
-            id: true,
-            content: true,
-            replies: true,
-            status: true,
-            createdAt: true,
+          orderBy: { createdAt: "desc" },
+          where: {
+            parentId: null,
+            status: "APPROVED",
+          },
+          // 2nd level of comments - Replies to Parent comments
+          include: {
+            _count: {
+              select: { replies: true },
+            },
+            replies: {
+              orderBy: {
+                createdAt: "asc",
+              },
+              where: {
+                status: "APPROVED",
+              },
+              // 3rd level of comments - Replies to Replies
+              include: {
+                _count: {
+                  select: { replies: true },
+                },
+                replies: {
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                  where: {
+                    status: "APPROVED",
+                  },
+                },
+                author: { select: { id: true, name: true, email: true } },
+              },
+            },
+            author: { select: { id: true, name: true, email: true } },
           },
         },
         author: { select: { id: true, name: true, email: true } },
