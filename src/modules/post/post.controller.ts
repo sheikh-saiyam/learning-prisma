@@ -84,7 +84,7 @@ const getPostById = async (req: Request, res: Response) => {
     if (!result) {
       return res.status(404).send({
         success: false,
-        message: "Post not found!",
+        message: "Post not found!!",
       });
     }
 
