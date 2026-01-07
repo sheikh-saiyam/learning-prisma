@@ -1,4 +1,4 @@
-import { UserRole } from "../../../generated/prisma/enums";
+import { CommentStatus, UserRole } from "../../../generated/prisma/enums";
 import { CommentUpdateInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { CreateCommentType } from "./comment.type";
@@ -43,7 +43,6 @@ const getCommentById = async (id: string) => {
     where: { id },
     include: {
       parent: { select: { id: true, content: true, authorId: true } },
-      replies: { select: { id: true, content: true, authorId: true } },
       post: { select: { id: true, title: true } },
       author: { select: { id: true, name: true, email: true } },
     },
@@ -111,10 +110,34 @@ const updateComment = async (
   return result;
 };
 
+const changeCommentStatus = async (id: string, status: CommentStatus) => {
+  if (!status) {
+    throw new Error("Status is required!");
+  }
+  if (status !== CommentStatus.APPROVED && status !== CommentStatus.REJECTED) {
+    throw new Error("Invalid status value provided!");
+  }
+
+  const comment = await prisma.comment.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+
+  if (!comment) throw new Error("Comment not found!");
+
+  const result = await prisma.comment.update({
+    where: { id },
+    data: { status },
+  });
+
+  return result;
+};
+
 export const commentServices = {
   createComment,
   getCommentById,
   getCommentsByAuthorId,
   deleteComment,
   updateComment,
+  changeCommentStatus,
 };

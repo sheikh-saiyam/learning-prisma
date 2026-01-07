@@ -15,6 +15,12 @@ router.patch(
   commentControllers.updateComment
 );
 
+router.patch(
+  "/:id/status",
+  auth(Role.ADMIN),
+  commentControllers.changeCommentStatus
+);
+
 router.delete(
   "/:id",
   auth(Role.ADMIN, Role.USER),
