@@ -114,16 +114,21 @@ const changeCommentStatus = async (id: string, status: CommentStatus) => {
   if (!status) {
     throw new Error("Status is required!");
   }
+
   if (status !== CommentStatus.APPROVED && status !== CommentStatus.REJECTED) {
     throw new Error("Invalid status value provided!");
   }
 
   const comment = await prisma.comment.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, status: true },
   });
 
   if (!comment) throw new Error("Comment not found!");
+
+  if (status === comment.status) {
+    throw new Error(`Comment status is already ${status}!`);
+  }
 
   const result = await prisma.comment.update({
     where: { id },
