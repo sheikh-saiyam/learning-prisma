@@ -1,7 +1,7 @@
-import { UserRole } from "../../../generated/prisma/enums";
 import { PostUpdateInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { CreatePostType, GetPostsParams } from "./post.types";
+import { sql } from "./../../../generated/prisma/internal/prismaNamespace";
 
 const createPost = async (data: CreatePostType, userId: string) => {
   const result = await prisma.post.create({
@@ -302,6 +302,110 @@ const deletePost = async (id: string, authorId: string, isAdmin: boolean) => {
   return result;
 };
 
+const getPostStats = async () => {
+  const result = await prisma.$transaction(async (tx) => {
+    const [
+      total,
+      totalPublished,
+      totalDraft,
+      totalArchived,
+      totalFeatured,
+      totalAuthorsAdmin,
+      totalAuthorsUser,
+      viewsAgg,
+      totalComments,
+      totalApprovedComments,
+      totalRejectedComments,
+    ] = await Promise.all([
+      // total aggregations
+      tx.post.count(),
+
+      tx.post.count({
+        where: { status: "PUBLISHED" },
+      }),
+
+      tx.post.count({
+        where: { status: "DRAFT" },
+      }),
+
+      tx.post.count({
+        where: { status: "ARCHIVED" },
+      }),
+
+      tx.post.count({
+        where: { isFeatured: true },
+      }),
+
+      tx.post.groupBy({
+        by: ["authorId"],
+        where: {
+          author: {
+            role: "ADMIN",
+          },
+        },
+      }),
+
+      tx.post.groupBy({
+        by: ["authorId"],
+        where: {
+          author: {
+            role: "USER",
+          },
+        },
+      }),
+
+      // views aggregation
+      tx.post.aggregate({
+        _sum: { views: true },
+        _avg: { views: true },
+        _min: { views: true },
+        _max: { views: true },
+      }),
+
+      // comment aggregations
+      tx.comment.count(),
+      tx.comment.count({
+        where: { status: "APPROVED" },
+      }),
+      tx.comment.count({
+        where: { status: "REJECTED" },
+      }),
+    ]);
+
+    const {
+      _sum: { views: totalViews },
+      _avg: { views: avgViews },
+      _min: { views: minViews },
+      _max: { views: maxViews },
+    } = viewsAgg;
+
+    return {
+      totalAgg: {
+        total,
+        totalPublished,
+        totalDraft,
+        totalArchived,
+        totalFeatured,
+        totalAuthorsAdmin: totalAuthorsAdmin.length,
+        totalAuthorsUser: totalAuthorsUser.length,
+      },
+      viewsAgg: {
+        total: totalViews ?? 0,
+        avg: parseFloat(avgViews?.toFixed(2) ?? "0"),
+        min: minViews ?? 0,
+        max: maxViews ?? 0,
+      },
+      commentAgg: {
+        total: totalComments,
+        totalApproved: totalApprovedComments,
+        totalRejected: totalRejectedComments,
+      },
+    };
+  });
+
+  return result;
+};
+
 export const postServices = {
   createPost,
   createManyPosts,
@@ -310,4 +414,5 @@ export const postServices = {
   getMyPosts,
   updatePost,
   deletePost,
+  getPostStats,
 };
