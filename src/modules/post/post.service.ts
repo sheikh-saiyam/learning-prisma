@@ -1,3 +1,5 @@
+import { UserRole } from "../../../generated/prisma/enums";
+import { PostUpdateInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { CreatePostType, GetPostsParams } from "./post.types";
 
@@ -248,10 +250,64 @@ const getMyPosts = async ({
   return { data: result, total };
 };
 
+const updatePost = async (
+  id: string,
+  payload: PostUpdateInput,
+  authorId: string,
+  isAdmin: boolean
+) => {
+  if (!payload || Object.keys(payload).length === 0) {
+    throw new Error("No update data provided!");
+  }
+
+  const post = await prisma.post.findUnique({
+    where: { id },
+    select: { id: true, authorId: true },
+  });
+
+  if (!post) throw new Error("Post not found!");
+
+  if (!isAdmin && payload.isFeatured !== undefined) {
+    delete payload.isFeatured;
+  }
+
+  if (!isAdmin && post.authorId !== authorId) {
+    throw new Error("You are not authorized to update this post!");
+  }
+
+  const result = await prisma.post.update({
+    where: { id },
+    data: payload,
+  });
+
+  return result;
+};
+
+const deletePost = async (id: string, authorId: string, isAdmin: boolean) => {
+  const post = await prisma.post.findUnique({
+    where: { id },
+    select: { id: true, authorId: true },
+  });
+
+  if (!post) throw new Error("Post not found!");
+
+  if (!isAdmin && post.authorId !== authorId) {
+    throw new Error("You are not authorized to update this post!");
+  }
+
+  const result = await prisma.post.delete({
+    where: { id },
+  });
+
+  return result;
+};
+
 export const postServices = {
   createPost,
   createManyPosts,
   getPosts,
   getPostById,
   getMyPosts,
+  updatePost,
+  deletePost,
 };

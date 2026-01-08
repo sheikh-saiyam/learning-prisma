@@ -144,10 +144,60 @@ const getMyPosts = async (req: Request, res: Response) => {
   }
 };
 
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req?.user?.id;
+    const isAdmin = req?.user?.role === "ADMIN";
+    const payload = req.body;
+
+    const result = await postServices.updatePost(
+      id!,
+      payload,
+      userId!,
+      isAdmin!
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Post updated successfully!",
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
+
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req?.user?.id;
+    const isAdmin = req?.user?.role === "ADMIN";
+
+    const result = await postServices.deletePost(id!, userId!, isAdmin!);
+
+    res.status(200).send({
+      success: true,
+      message: "Post deleted successfully!",
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
+
 export const postControllers = {
   createPost,
   createManyPosts,
   getPosts,
   getPostById,
   getMyPosts,
+  updatePost,
+  deletePost,
 };

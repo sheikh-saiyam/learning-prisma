@@ -22,4 +22,8 @@ router.post(
   postControllers.createManyPosts
 );
 
+router.patch("/:id", auth(Role.USER, Role.ADMIN), postControllers.updatePost);
+
+router.delete("/:id", auth(Role.USER, Role.ADMIN), postControllers.deletePost);
+
 export const postRouter = router;
