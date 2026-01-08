@@ -148,6 +148,8 @@ const getPostById = async (postId: string) => {
       },
     });
 
+    if (!post) throw new Error("Post not found");
+
     await ctx.post.update({
       where: { id: postId },
       data: { views: { increment: 1 } },
@@ -159,11 +161,91 @@ const getPostById = async (postId: string) => {
   return result;
 };
 
-const getMyPosts = async (userId: string) => {
-  const result = await prisma.post.findMany({
-    where: { authorId: userId },
+const getMyPosts = async ({
+  skip,
+  take,
+  orderBy,
+  search,
+  tags,
+  isFeatured,
+  status,
+  authorId,
+}: GetPostsParams & { authorId: string }) => {
+  const user = await prisma.user.findUnique({
+    where: { id: authorId },
+    select: { status: true },
   });
-  return result;
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user?.status !== "ACTIVE") {
+    throw new Error("User is not active");
+  }
+
+  const result = await prisma.post.findMany({
+    // filtering
+    where: {
+      authorId,
+      AND: [
+        // searching in title, content and tags
+        {
+          ...(search && {
+            OR: [
+              {
+                title: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+              {
+                content: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+              {
+                tags: {
+                  has: search,
+                },
+              },
+            ],
+          }),
+        },
+        // filtering by tags
+        {
+          ...(tags.length > 0 && {
+            tags: {
+              hasEvery: tags,
+            },
+          }),
+        },
+        // filtering by isFeatured
+        {
+          ...(typeof isFeatured === "boolean" && {
+            isFeatured: isFeatured,
+          }),
+        },
+        // filtering by status
+        {
+          ...(status && {
+            status: status,
+          }),
+        },
+      ],
+    },
+    // pagination
+    skip: skip,
+    take: take,
+    // sorting
+    ...(orderBy && { orderBy }),
+    include: { _count: { select: { comments: true } } },
+  });
+
+  const total = await prisma.post.count();
+
+  return { data: result, total };
 };
 
 export const postServices = {
@@ -171,4 +253,5 @@ export const postServices = {
   createManyPosts,
   getPosts,
   getPostById,
+  getMyPosts,
 };

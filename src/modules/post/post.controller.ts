@@ -56,7 +56,7 @@ const getPosts = async (req: Request, res: Response) => {
       authorId: authorId as string | undefined,
     });
 
-    res.status(201).send({
+    res.status(200).send({
       success: true,
       message: "Post retrieve successfully!",
       meta: {
@@ -101,9 +101,53 @@ const getPostById = async (req: Request, res: Response) => {
   }
 };
 
+const getMyPosts = async (req: Request, res: Response) => {
+  try {
+    const authorId = req?.user?.id;
+    const { search, tags, isFeatured, status } = req.query;
+
+    const { skip, take, orderBy } = buildPaginationAndSort(req.query);
+
+    const splittedTags = tags ? (tags as string).split(",") : [];
+    const booleanIsFeatured =
+      isFeatured === "true" ? true : isFeatured === "false" ? false : undefined;
+
+    const result = await postServices.getMyPosts({
+      skip,
+      take,
+      orderBy,
+      search: search as string,
+      tags: splittedTags,
+      isFeatured: booleanIsFeatured,
+      status: status as PostStatus | undefined,
+      authorId: authorId as string,
+    });
+
+    res.status(200).send({
+      success: true,
+      message: "My posts retrieved successfully!",
+      meta: {
+        total: result.total,
+        page: Math.ceil(skip / take) + 1,
+        totalPages: Math.ceil(result.total / take),
+        limit: take,
+        skip: skip,
+      },
+      data: result.data,
+    });
+  } catch (error) {
+    console.log({ error });
+    res.status(500).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
+
 export const postControllers = {
   createPost,
   createManyPosts,
   getPosts,
   getPostById,
+  getMyPosts,
 };
