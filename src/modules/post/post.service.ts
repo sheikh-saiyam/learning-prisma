@@ -1,7 +1,6 @@
 import { PostUpdateInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { CreatePostType, GetPostsParams } from "./post.types";
-import { sql } from "./../../../generated/prisma/internal/prismaNamespace";
 
 const createPost = async (data: CreatePostType, userId: string) => {
   const result = await prisma.post.create({
