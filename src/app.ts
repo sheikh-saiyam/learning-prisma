@@ -5,6 +5,7 @@ import { auth } from "./lib/auth";
 import { postRouter } from "./modules/post/post.route";
 import { commentRouter } from "./modules/comment/comment.route";
 import logger from "./middlewares/logger";
+import errorHandler from "./middlewares/error-handler";
 
 const app: Application = express();
 
@@ -21,6 +22,8 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+
+app.use(errorHandler);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Prisma Blog App Server Is Running!");

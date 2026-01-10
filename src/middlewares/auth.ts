@@ -22,17 +22,17 @@ const auth = (...roles: Role[]) => {
       });
     }
 
-    if (!session.user.emailVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: Email not verified!",
-      });
-    }
+    // if (!session.user.emailVerified) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Forbidden: Email not verified!",
+    //   });
+    // }
 
     const { id, email, name, role, emailVerified } = session.user;
 
     // set user in request
-    req.user = { id, email, name, role: role!, emailVerified };
+    req.user = { id, email, name, role: role as Role, emailVerified };
 
     // check for roles
     if (roles.length && !roles.includes(role as Role)) {
