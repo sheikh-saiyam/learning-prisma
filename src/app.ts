@@ -6,11 +6,13 @@ import { postRouter } from "./modules/post/post.route";
 import { commentRouter } from "./modules/comment/comment.route";
 import logger from "./middlewares/logger";
 import errorHandler from "./middlewares/error-handler";
+import notFound from "./middlewares/not-found";
 
 const app: Application = express();
 
 app.use(express.json());
 app.use(logger);
+
 app.use(
   cors({
     origin: process.env.APP_ORIGIN,
@@ -19,9 +21,10 @@ app.use(
 );
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
-
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+
+app.use(notFound);
 
 app.use(errorHandler);
 
