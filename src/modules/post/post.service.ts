@@ -1,4 +1,7 @@
-import { PostUpdateInput } from "../../../generated/prisma/models";
+import {
+  PostUpdateInput,
+  PostWhereInput,
+} from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { CreatePostType, GetPostsParams } from "./post.types";
 
@@ -26,6 +29,61 @@ const getPosts = async ({
   status,
   authorId,
 }: GetPostsParams) => {
+  const whereFilters: PostWhereInput = {
+    AND: [
+      // searching in title, content and tags
+      {
+        ...(search && {
+          OR: [
+            {
+              title: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+            {
+              content: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+            {
+              tags: {
+                has: search,
+              },
+            },
+          ],
+        }),
+      },
+      // filtering by tags
+      {
+        ...(tags.length > 0 && {
+          tags: {
+            hasEvery: tags,
+          },
+        }),
+      },
+      // filtering by isFeatured
+      {
+        ...(typeof isFeatured === "boolean" && {
+          isFeatured: isFeatured,
+        }),
+      },
+      // filtering by status
+      {
+        ...(status && {
+          status: status,
+        }),
+      },
+      // filtering by authorId
+      {
+        ...(authorId && {
+          authorId: authorId,
+        }),
+      },
+    ],
+  };
+
   const result = await prisma.post.findMany({
     include: {
       author: { select: { id: true, name: true, email: true } },
@@ -33,60 +91,7 @@ const getPosts = async ({
       _count: { select: { comments: true } },
     },
     // filtering
-    where: {
-      AND: [
-        // searching in title, content and tags
-        {
-          ...(search && {
-            OR: [
-              {
-                title: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                content: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                tags: {
-                  has: search,
-                },
-              },
-            ],
-          }),
-        },
-        // filtering by tags
-        {
-          ...(tags.length > 0 && {
-            tags: {
-              hasEvery: tags,
-            },
-          }),
-        },
-        // filtering by isFeatured
-        {
-          ...(typeof isFeatured === "boolean" && {
-            isFeatured: isFeatured,
-          }),
-        },
-        // filtering by status
-        {
-          ...(status && {
-            status: status,
-          }),
-        },
-        // filtering by authorId
-        {
-          ...(authorId && {
-            authorId: authorId,
-          }),
-        },
-      ],
-    },
+    where: whereFilters,
     // pagination
     skip: skip,
     take: take,
@@ -94,7 +99,9 @@ const getPosts = async ({
     ...(orderBy && { orderBy }),
   });
 
-  const total = await prisma.post.count();
+  const total = await prisma.post.count({
+    where: whereFilters,
+  });
 
   return { data: result, total };
 };
@@ -185,57 +192,59 @@ const getMyPosts = async ({
     throw new Error("User is not active");
   }
 
+  const whereFilters: PostWhereInput = {
+    authorId,
+    AND: [
+      // searching in title, content and tags
+      {
+        ...(search && {
+          OR: [
+            {
+              title: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+            {
+              content: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+            {
+              tags: {
+                has: search,
+              },
+            },
+          ],
+        }),
+      },
+      // filtering by tags
+      {
+        ...(tags.length > 0 && {
+          tags: {
+            hasEvery: tags,
+          },
+        }),
+      },
+      // filtering by isFeatured
+      {
+        ...(typeof isFeatured === "boolean" && {
+          isFeatured: isFeatured,
+        }),
+      },
+      // filtering by status
+      {
+        ...(status && {
+          status: status,
+        }),
+      },
+    ],
+  };
+
   const result = await prisma.post.findMany({
     // filtering
-    where: {
-      authorId,
-      AND: [
-        // searching in title, content and tags
-        {
-          ...(search && {
-            OR: [
-              {
-                title: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                content: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                tags: {
-                  has: search,
-                },
-              },
-            ],
-          }),
-        },
-        // filtering by tags
-        {
-          ...(tags.length > 0 && {
-            tags: {
-              hasEvery: tags,
-            },
-          }),
-        },
-        // filtering by isFeatured
-        {
-          ...(typeof isFeatured === "boolean" && {
-            isFeatured: isFeatured,
-          }),
-        },
-        // filtering by status
-        {
-          ...(status && {
-            status: status,
-          }),
-        },
-      ],
-    },
+    where: whereFilters,
     // pagination
     skip: skip,
     take: take,
@@ -244,7 +253,9 @@ const getMyPosts = async ({
     include: { _count: { select: { comments: true } } },
   });
 
-  const total = await prisma.post.count();
+  const total = await prisma.post.count({
+    where: whereFilters,
+  });
 
   return { data: result, total };
 };
