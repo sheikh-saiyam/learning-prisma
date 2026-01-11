@@ -15,9 +15,44 @@ const errorHandler = (
     statusCode = 400;
     errorMessage = "Validation Error";
     errorDetails = err.message;
+  } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    switch (err.code) {
+      case "P2002":
+        statusCode = 409;
+        errorMessage = "Conflict: Unique constraint failed";
+        errorDetails = err.message;
+        break;
+      case "P2025":
+        statusCode = 404;
+        errorMessage = "Not Found: Record not found";
+        errorDetails = err.message;
+        break;
+      default:
+        statusCode = 400;
+        errorMessage = "Bad Request";
+        errorDetails = err.message;
+        break;
+    }
+  } else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+    statusCode = 500;
+    errorMessage = "Internal Server Error";
+    errorDetails = err.message;
+  } else if (err instanceof Prisma.PrismaClientValidationError) {
+    statusCode = 400;
+    errorMessage = "Bad Request: Validation Error";
+    errorDetails = err.message;
+  } else if (err instanceof Prisma.PrismaClientInitializationError) {
+    statusCode = 500;
+    errorMessage = "Internal Server Error: Initialization Error";
+    errorDetails = err.message;
+  } else if (err instanceof Prisma.PrismaClientRustPanicError) {
+    statusCode = 500;
+    errorMessage = "Internal Server Error: Rust Panic";
+    errorDetails = err.message;
+  } else if (err instanceof Error) {
+    errorMessage = err.message || "Internal Server Error";
   }
 
-  console.error(err.stack);
   res.status(statusCode).json({
     success: false,
     message: errorMessage,

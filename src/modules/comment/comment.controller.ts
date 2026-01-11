@@ -1,8 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { commentServices } from "./comment.service";
 import { CommentStatus } from "../../../generated/prisma/enums";
 
-const createComment = async (req: Request, res: Response) => {
+const createComment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const result = await commentServices.createComment({
       ...req.body,
@@ -15,14 +19,15 @@ const createComment = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getCommentById = async (req: Request, res: Response) => {
+const getCommentById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const result = await commentServices.getCommentById(req.params.id!);
 
@@ -32,14 +37,15 @@ const getCommentById = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getCommentsByAuthorId = async (req: Request, res: Response) => {
+const getCommentsByAuthorId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const result = await commentServices.getCommentsByAuthorId(req.params.id!);
 
@@ -49,14 +55,15 @@ const getCommentsByAuthorId = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const deleteComment = async (req: Request, res: Response) => {
+const deleteComment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     const userId = req?.user?.id;
@@ -70,14 +77,15 @@ const deleteComment = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const updateComment = async (req: Request, res: Response) => {
+const updateComment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     const userId = req?.user?.id;
@@ -97,14 +105,15 @@ const updateComment = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const changeCommentStatus = async (req: Request, res: Response) => {
+const changeCommentStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     const { status }: { status: CommentStatus } = req.body;
@@ -117,10 +126,7 @@ const changeCommentStatus = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 

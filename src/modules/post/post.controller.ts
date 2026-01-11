@@ -16,7 +16,11 @@ const createPost = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const createManyPosts = async (req: Request, res: Response) => {
+const createManyPosts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const result = await postServices.createManyPosts(req.body, req?.user?.id!);
     res.status(201).send({
@@ -25,14 +29,11 @@ const createManyPosts = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getPosts = async (req: Request, res: Response) => {
+const getPosts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { search, tags, isFeatured, status, authorId } = req.query;
 
@@ -66,14 +67,11 @@ const getPosts = async (req: Request, res: Response) => {
       data: result.data,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getPostById = async (req: Request, res: Response) => {
+const getPostById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const result = await postServices.getPostById(id!);
@@ -91,14 +89,11 @@ const getPostById = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getMyPosts = async (req: Request, res: Response) => {
+const getMyPosts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authorId = req?.user?.id;
     const { search, tags, isFeatured, status } = req.query;
@@ -134,14 +129,11 @@ const getMyPosts = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.log({ error });
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const updatePost = async (req: Request, res: Response) => {
+const updatePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req?.user?.id;
@@ -161,14 +153,11 @@ const updatePost = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const deletePost = async (req: Request, res: Response) => {
+const deletePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req?.user?.id;
@@ -182,14 +171,15 @@ const deletePost = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 
-const getPostStats = async (req: Request, res: Response) => {
+const getPostStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const result = await postServices.getPostStats();
     res.status(200).send({
@@ -198,10 +188,7 @@ const getPostStats = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    next(error);
   }
 };
 

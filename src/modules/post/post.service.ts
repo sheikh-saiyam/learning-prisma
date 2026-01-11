@@ -270,12 +270,12 @@ const updatePost = async (
     throw new Error("No update data provided!");
   }
 
-  const post = await prisma.post.findUniqueOrThrow({
+  const post = await prisma.post.findUnique({
     where: { id },
     select: { id: true, authorId: true },
   });
 
-  // if (!post) throw new Error("Post not found!");
+  if (!post) throw new Error("Post not found!");
 
   if (!isAdmin && payload.isFeatured !== undefined) {
     delete payload.isFeatured;
