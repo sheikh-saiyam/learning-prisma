@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { commentServices } from "./comment.service";
 import { CommentStatus } from "../../../generated/prisma/enums";
+import { buildPaginationAndSort } from "../../utils/pagination-sort";
 
 const createComment = async (
   req: Request,
@@ -17,6 +18,42 @@ const createComment = async (
       success: true,
       message: "Comment created successfully!",
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllComments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { search, status, authorId } = req.query;
+    const { skip, take, orderBy } = buildPaginationAndSort(req.query);
+
+    const result = await commentServices.getAllComments({
+      skip,
+      take,
+      orderBy,
+      search: search as string | undefined,
+      status: status as CommentStatus,
+      authorId: authorId as string | undefined,
+      postId: req.query.postId as string | undefined,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Comments retrieved successfully!",
+      meta: {
+        total: result.total,
+        page: Math.ceil(skip / take) + 1,
+        totalPages: Math.ceil(result.total / take),
+        limit: take,
+        skip: skip,
+      },
+      data: result.data,
     });
   } catch (error) {
     next(error);
@@ -132,6 +169,7 @@ const changeCommentStatus = async (
 
 export const commentControllers = {
   createComment,
+  getAllComments,
   getCommentById,
   getCommentsByAuthorId,
   deleteComment,

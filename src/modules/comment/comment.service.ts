@@ -1,7 +1,10 @@
 import { CommentStatus, UserRole } from "../../../generated/prisma/enums";
-import { CommentUpdateInput } from "../../../generated/prisma/models";
+import {
+  CommentUpdateInput,
+  CommentWhereInput,
+} from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
-import { CreateCommentType } from "./comment.type";
+import { CreateCommentType, GetALlCommentsParams } from "./comment.type";
 
 const createComment = async (payload: CreateCommentType) => {
   const post = await prisma.post.findUnique({
@@ -36,6 +39,74 @@ const createComment = async (payload: CreateCommentType) => {
   });
 
   return result;
+};
+
+const getAllComments = async ({
+  skip,
+  take,
+  orderBy,
+  search,
+  status,
+  authorId,
+  postId,
+}: GetALlCommentsParams) => {
+  const whereFilters: CommentWhereInput = {
+    AND: [
+      // searching in content
+      {
+        ...(search && {
+          OR: [
+            {
+              content: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }),
+      },
+
+      // filtering by status
+      {
+        ...(status && {
+          status: status,
+        }),
+      },
+      // filtering by authorId
+      {
+        ...(authorId && {
+          authorId: authorId,
+        }),
+      },
+      // filtering by postId
+      {
+        ...(postId && {
+          postId: postId,
+        }),
+      },
+    ],
+  };
+
+  const result = await prisma.comment.findMany({
+    include: {
+      post: { select: { id: true, title: true } },
+      author: { select: { id: true, name: true, email: true } },
+      parent: { select: { id: true, content: true, authorId: true } },
+    },
+    // filtering
+    where: whereFilters,
+    // pagination
+    skip: skip,
+    take: take,
+    // sorting
+    ...(orderBy && { orderBy }),
+  });
+
+  const total = await prisma.comment.count({
+    where: whereFilters,
+  });
+
+  return { data: result, total };
 };
 
 const getCommentById = async (id: string) => {
@@ -140,6 +211,7 @@ const changeCommentStatus = async (id: string, status: CommentStatus) => {
 
 export const commentServices = {
   createComment,
+  getAllComments,
   getCommentById,
   getCommentsByAuthorId,
   deleteComment,
