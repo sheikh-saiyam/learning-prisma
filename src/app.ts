@@ -15,9 +15,9 @@ app.use(logger);
 
 app.use(
   cors({
-    origin: process.env.APP_ORIGIN,
+    origin: [process.env.DEV_APP_ORIGIN!, process.env.PROD_APP_ORIGIN!],
     credentials: true,
-  })
+  }),
 );
 
 app.all("/api/auth/*splat", toNodeHandler(auth));

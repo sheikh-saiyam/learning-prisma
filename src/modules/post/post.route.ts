@@ -9,10 +9,10 @@ router.get("/", postControllers.getPosts);
 router.get(
   "/my-posts",
   auth(Role.USER, Role.ADMIN),
-  postControllers.getMyPosts
+  postControllers.getMyPosts,
 );
 
-router.get("/stats", auth(Role.ADMIN), postControllers.getPostStats);
+router.get("/stats", auth(Role.ADMIN, Role.USER), postControllers.getPostStats);
 
 router.get("/:id", postControllers.getPostById);
 
@@ -21,7 +21,7 @@ router.post("/", auth(Role.USER, Role.ADMIN), postControllers.createPost);
 router.post(
   "/create-many",
   auth(Role.USER, Role.ADMIN),
-  postControllers.createManyPosts
+  postControllers.createManyPosts,
 );
 
 router.patch("/:id", auth(Role.USER, Role.ADMIN), postControllers.updatePost);
