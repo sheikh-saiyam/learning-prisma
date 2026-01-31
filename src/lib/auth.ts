@@ -26,6 +26,9 @@ export const auth = betterAuth({
       },
     },
   },
+  advanced: {
+    cookiePrefix: "prismablog",
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: false,
